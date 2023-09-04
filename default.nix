@@ -110,9 +110,9 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
     '';
 
   } // lib.attrsets.concatMapAttrs (name: { description, path }: {
-    "${name}" = '' ${self.init-with-diff} ${name} '';
+    "${name}" = "${self.init-with-diff} ${name}";
     "snip-${name}" = ''${self.snip} ${name}'';
-    "${name}-edit" = ''$EDITOR ${templatesFolder}/${name} '';
+    "${name}-edit" = ''$EDITOR $(${listAndSelectTool} ${templatesFolder}/${name}) '';
     "${name}-noDiff" = '' ${self.init} ${name} '';
     "${name}-description" = '' echo "${description}" '';
   }) templates)
