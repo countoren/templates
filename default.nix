@@ -105,8 +105,8 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
     save-edit = ''
       name=$(basename `pwd`)
       desc=$(${self.utils-get-flake-desc})
-      INPUT="y"
-      ${self.save-basic} $name $([[ ! -z $desc ]] || echo 'N/A') $input
+      edit="y"
+      ${self.save-basic} . $name $desc $edit
     '';
 
   } // lib.attrsets.concatMapAttrs (name: { description, path }: {
