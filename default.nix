@@ -88,6 +88,20 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
       read -n1 edit
       ${self.save-basic} . $name $desc $edit
     '';
+    
+    remove = ''
+      if [ -z "\$1" ]
+      then
+        echo "you must supply template name"
+        exit 1
+      fi
+      echo 'about to run rm -rf ${templatesFolder}/$1'
+      echo 'continue?[press y to edit or any key otherwise]'
+      read -n1 delete
+      [[ "$delete" == "y" ]] && rm -rf ${templatesFolder}/$1 && \
+      sed -i'.bak' ',${templatesFolder}/'$1',d' ${templatesFolder}/templates.nix
+    '';
+
     utils-get-flake-desc = "${nix} flake metadata  | grep 'Description' | sed 's/Description.*//' ";
     save = ''
       name=$(basename `pwd`)
