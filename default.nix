@@ -64,21 +64,19 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
 
 
     save-basic = ''
-      echo "creating template folder $1 and copying the current folder into it..."
-      mkdir -p ${templatesFolder}/$1 
-      cp -r . ${templatesFolder}/$1 
+      ${self.utils-create-and-copy-template-files} $1 $2 && \
 
-      [[ "$INPUT" == "y" ]] && $EDITOR ${templatesFolder}/$1 && \
+      [[ "$4" == "y" ]] && $EDITOR ${templatesFolder}/$2 && \
       echo 'Waiting, press any key to contine...' && read -n1 K 
 
       echo "cd into templates and adding folder to git"
       pushd ${templatesFolder}
-      ${git} add $1
+      ${git} add $2
       echo "cd back to last folder"
       popd
 
-      echo "Inserting $1 into the templates list"
-      echo "// { $1 = { description = \"$2\"; path = ./$name; }; }" >> ${templatesFolder}/templates.nix
+      echo "Inserting $2 into the templates list"
+      echo "// { $2 = { description = \"$([[ ! -z $3 ]] || echo 'N/A')\"; path = ./$2; }; }" >> ${templatesFolder}/templates.nix
 
       ${self.utils-install-command} 
     '';
@@ -87,16 +85,23 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
       read -p "Template Name:" name 
       read -p "Template Desc:" desc 
       echo 'Edit Files?[press y to edit or any key otherwise]'
-      read -n1 INPUT
-      ${self.save-basic} $name $desc $INPUT
+      read -n1 edit
+      ${self.save-basic} . $name $desc $edit
     '';
     utils-get-flake-desc = "${nix} flake metadata  | grep 'Description' | sed 's/Description.*//' ";
     save = ''
       name=$(basename `pwd`)
       desc=$(${self.utils-get-flake-desc})
-      INPUT="n"
-      ${self.save-basic} $name $([[ ! -z $desc ]] || echo 'N/A') $input
+      edit="n"
+      ${self.save-basic} . $name $desc $edit
     '';
+    save-flake = ''
+      read -p "Template Name:" name 
+      desc=$(${self.utils-get-flake-desc})
+      edit="n"
+      ${self.save-basic} flake.nix $name $desc $edit
+    '';
+
     save-edit = ''
       name=$(basename `pwd`)
       desc=$(${self.utils-get-flake-desc})
