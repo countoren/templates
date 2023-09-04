@@ -47,10 +47,8 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
     '';
 
     init-with-diff = ''
-      echo 'merge conflict files running the following command:'
-      echo "${difftool} $1 $2"
-        
-      ${self.init} $1 2>&1 | grep 'refusing\|merge' | awk '{ print $NF }' | xargs -n 2 ${difftool}
+      conflicts=$(${self.init} $1 2>&1 | grep 'refusing\|merge')
+      [[ -z $conflicts ]] || echo $conflicts | awk '{ print $NF }' | xargs -n 2 ${difftool}
     '';
 
     utils-create-and-copy-template-files = ''
