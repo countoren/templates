@@ -133,6 +133,9 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
 # nix build -f default.nix --argstr templatesFolder /home/p1n3/nixpkgs/templates 
 in lib.fix (self: pkgs.symlinkJoin {
   name = prefix;
-  passthru.commands = lib.mapAttrs (name: pkgs.writeShellScriptBin "${prefix}-${name}") commands;
+  passthru.commands = lib.mapAttrs (name: command: pkgs.runCommand "${prefix}-${name}" {} ''
+    mkdir -p $out/bin
+    ln -sf ${command} $out/bin/${prefix}-${name}
+    '') commands;
   paths = lib.attrValues self.passthru.commands;
 })
