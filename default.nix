@@ -53,6 +53,16 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
       ${self.init} $1 2>&1 | grep 'refusing\|merge' | awk '{ print $NF }' | xargs -n 2 ${difftool}
     '';
 
+    utils-create-and-copy-template-files = ''
+      echo "creating template folder ${templatesFolder}"
+      mkdir -p ${templatesFolder}/$2 
+      echo "copying templates files..."
+      echo "origin: $1"
+      echo "target: ${templatesFolder}/$2"
+      cp -r $1 ${templatesFolder}/$2 
+    '';
+
+
     save-basic = ''
       echo "creating template folder $1 and copying the current folder into it..."
       mkdir -p ${templatesFolder}/$1 
