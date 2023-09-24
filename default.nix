@@ -1,5 +1,5 @@
 { pkgs ? (builtins.getFlake (toString ../.)).inputs.nixpkgs.legacyPackages.${builtins.currentSystem}
-, templates ? import ./templates.nix
+, templates ? import ./templates.nix { inherit (pkgs) lib; }
 # Prefix to be appended to all 
 , prefix ? "sx"
 
@@ -73,8 +73,8 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
       echo "cd back to last folder"
       popd
 
-      echo "Inserting $2 into the templates list"
-      echo "// { $2 = { description = \"$([[ ! -z $3 ]] || echo 'N/A')\"; path = ./$2; }; }" >> ${templatesFolder}/templates.nix
+      echo "creating .${prefix}-description for template: $2"
+      ([[ ! -z $3 ]] && echo $3) || echo 'N/A' > .${prefix}-description
 
       ${self.utils-install-command} 
     '';
@@ -90,14 +90,13 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
     remove = ''
       if [ -z "\$1" ]
       then
-        echo "you must supply template name"
+        echo "you must supply template name as a parameter"
         exit 1
       fi
       echo 'about to run rm -rf ${templatesFolder}/$1'
       echo 'continue?[press y to edit or any key otherwise]'
       read -n1 delete
-      [[ "$delete" == "y" ]] && rm -rf ${templatesFolder}/$1 && \
-      sed -i'.bak' ',${templatesFolder}/'$1',d' ${templatesFolder}/templates.nix
+      [[ "$delete" == "y" ]] && rm -rf ${templatesFolder}/$1
     '';
 
     utils-get-flake-desc = "${nix} flake metadata  | grep 'Description' | sed 's/Description.*//' ";
@@ -122,20 +121,20 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
     '';
 
   } // lib.attrsets.concatMapAttrs (name: { description, path }: {
-    "${name}" = "${self.init-with-diff} ${name}";
+    "tmp-${name}" = "${self.init-with-diff} ${name}";
     "snip-${name}" = ''${self.snip} ${name}'';
-    "${name}-edit" = ''$EDITOR $(${listAndSelectTool} ${templatesFolder}/${name}) '';
-    "${name}-noDiff" = '' ${self.init} ${name} '';
-    "${name}-description" = '' echo "${description}" '';
+    "tmp-${name}-edit" = ''$EDITOR $(${listAndSelectTool} ${templatesFolder}/${name}) '';
+    "tmp-${name}-noDiff" = '' ${self.init} ${name} '';
+    "tmp-${name}-description" = '' echo "${description}" '';
   }) templates)
 
 );
 # nix build -f default.nix --argstr templatesFolder /home/p1n3/nixpkgs/templates 
-in lib.fix (self: pkgs.symlinkJoin {
+in pkgs.symlinkJoin rec {
   name = prefix;
   passthru.commands = lib.mapAttrs (name: command: pkgs.runCommand "${prefix}-${name}" {} ''
     mkdir -p $out/bin
     ln -sf ${command} $out/bin/${prefix}-${name}
     '') commands;
-  paths = lib.attrValues self.passthru.commands;
-})
+  paths = lib.attrValues passthru.commands;
+}
