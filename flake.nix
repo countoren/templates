@@ -3,7 +3,7 @@
 
   outputs = {self, nixpkgs, flake-utils }:
   let 
-    templates = import templates.nix { lib = nixpkgs.lib; };
+    templates = import ./templates.nix { lib = nixpkgs.lib; };
   in
   flake-utils.lib.eachDefaultSystem (system:
   {
