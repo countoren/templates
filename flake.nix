@@ -6,10 +6,11 @@
     templates = import ./templates.nix { lib = nixpkgs.lib; };
   in
   flake-utils.lib.eachDefaultSystem (system:
+  let  pkgs = nixpkgs.legacyPackages.${system};
+  in
   {
     packages = (import ./default.nix { 
-      inherit templates; 
-      pkgs = nixpkgs.legacyPackages.${system};
+      inherit pkgs templates; 
     }).commands;
   }) //
   { inherit templates; };
