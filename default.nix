@@ -38,6 +38,11 @@
 let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript 
   ({
     utils-install-command = installCommand;
+    utils-files-used-by-flake-show = ''
+      nix flake show &
+      pid=$!
+      ${pkgs.strace}/bin/strace -e trace=file -p $pid 2>&1 | grep -Po "$(pwd)/.*.nix" | sort | uniq
+    '';
     init = ''
       ${nix} flake init -t ${templatesFolder}\#$1
     '';
