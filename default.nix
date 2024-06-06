@@ -109,7 +109,7 @@ let commands = lib.fix (self: lib.mapAttrs pkgs.writeShellScript
       name=$(basename `pwd`)
       desc=$(${self.utils-get-flake-desc})
       edit="n"
-      ${self.save-basic} . $name $desc $edit
+      ${self.save-basic} ''${1:-.} $name $desc $edit
     '';
     save-flake = ''
       read -p "Template Name:" name 
